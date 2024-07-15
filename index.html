@@ -108,8 +108,24 @@
             }
         }
 
+        function calculateMA(data, period) {
+            let result = [];
+            for (let i = 0; i < data.length; i++) {
+                if (i < period - 1) {
+                    result.push(null);
+                } else {
+                    let sum = 0;
+                    for (let j = 0; j < period; j++) {
+                        sum += data[i - j].close;
+                    }
+                    result.push(sum / period);
+                }
+            }
+            return result;
+        }
+
         function createChart(data) {
-            const trace = {
+            const traceCandlestick = {
                 x: data.map(item => item.date),
                 close: data.map(item => item.close),
                 high: data.map(item => item.high),
@@ -120,15 +136,45 @@
                 yaxis: 'y'
             };
 
+            const ma20 = calculateMA(data, 20);
+            const traceMA20 = {
+                x: data.map(item => item.date),
+                y: ma20,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'MA20',
+                line: { color: 'blue' }
+            };
+
+            const ma60 = calculateMA(data, 60);
+            const traceMA60 = {
+                x: data.map(item => item.date),
+                y: ma60,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'MA60',
+                line: { color: 'green' }
+            };
+
+            const ma120 = calculateMA(data, 120);
+            const traceMA120 = {
+                x: data.map(item => item.date),
+                y: ma120,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'MA120',
+                line: { color: 'red' }
+            };
+
             const layout = {
                 title: 'BTC/USD 价格走势图',
                 dragmode: 'zoom',
-                showlegend: false,
+                showlegend: true,
                 xaxis: { rangeslider: {visible: false}, title: 'Date' },
                 yaxis: { title: 'Price (USD)' }
             };
 
-            Plotly.newPlot('chart', [trace], layout);
+            Plotly.newPlot('chart', [traceCandlestick, traceMA20, traceMA60, traceMA120], layout);
         }
 
         // 页面加载时恢复上次输入的数据
@@ -144,4 +190,5 @@
     </script>
 </body>
 </html>
+
 
