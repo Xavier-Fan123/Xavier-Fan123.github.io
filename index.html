@@ -57,6 +57,7 @@
     <script>
         const API_KEY = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
         const symbol = 'BTCUSD';
+        let chartInterval;
 
         async function trackPosition() {
             const openPrice = parseFloat(document.getElementById('openPrice').value);
@@ -79,6 +80,23 @@
             document.getElementById('result').innerHTML = '<div class="loading">数据加载中...</div>';
             document.getElementById('chart').innerHTML = '';
 
+            // Clear previous interval
+            if (chartInterval) {
+                clearInterval(chartInterval);
+            }
+
+            try {
+                await updateData(openPrice, direction, amount, timeframe);
+                chartInterval = setInterval(async () => {
+                    await updateData(openPrice, direction, amount, timeframe);
+                }, 1000); // Refresh data every second
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = "<p style='color: red;'>发生错误，请稍后再试</p>";
+            }
+        }
+
+        async function updateData(openPrice, direction, amount, timeframe) {
             try {
                 const url = `https://financialmodelingprep.com/api/v3/historical-chart/${timeframe}/${symbol}?apikey=${API_KEY}`;
                 const response = await axios.get(url);
@@ -133,7 +151,8 @@
                 open: data.map(item => item.open),
                 type: 'candlestick',
                 xaxis: 'x',
-                yaxis: 'y'
+                yaxis: 'y',
+                name: '价格走势'
             };
 
             const ma20 = calculateMA(data, 20);
@@ -171,10 +190,11 @@
                 dragmode: 'zoom',
                 showlegend: true,
                 xaxis: { rangeslider: {visible: false}, title: 'Date' },
-                yaxis: { title: 'Price (USD)' }
+                yaxis: { title: 'Price (USD)' },
+                autosize: true
             };
 
-            Plotly.newPlot('chart', [traceCandlestick, traceMA20, traceMA60, traceMA120], layout);
+            Plotly.newPlot('chart', [traceCandlestick, traceMA20, traceMA60, traceMA120], layout, {responsive: true});
         }
 
         // 页面加载时恢复上次输入的数据
@@ -190,5 +210,6 @@
     </script>
 </body>
 </html>
+
 
 
