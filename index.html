@@ -89,7 +89,7 @@
                 await updateData(openPrice, direction, amount, timeframe);
                 chartInterval = setInterval(async () => {
                     await updateData(openPrice, direction, amount, timeframe);
-                }, 1000); // Refresh data every second
+                }, 60000); // Refresh data every minute
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('result').innerHTML = "<p style='color: red;'>发生错误，请稍后再试</p>";
@@ -98,8 +98,10 @@
 
         async function updateData(openPrice, direction, amount, timeframe) {
             try {
+                console.log(`Fetching data for timeframe: ${timeframe}`);
                 const url = `https://financialmodelingprep.com/api/v3/historical-chart/${timeframe}/${symbol}?apikey=${API_KEY}`;
                 const response = await axios.get(url);
+                console.log(`Data fetched:`, response.data);
                 const data = response.data;
 
                 if (data.length === 0) {
