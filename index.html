@@ -50,10 +50,10 @@
         <div class="input-group">
             <label for="timeframe">时间周期:</label>
             <select id="timeframe">
-                <option value="1hour">1小时</option>
-                <option value="6hour">6小时</option>
                 <option value="1day">1日</option>
                 <option value="1week">1周</option>
+                <option value="1month">1月</option>
+                <option value="3month">3月</option>
             </select>
         </div>
         <button onclick="trackPosition()">跟踪位置</button>
@@ -72,26 +72,25 @@
 
         async function fetchData(timeframe) {
             try {
-                const days = timeframeTodays(timeframe);
-                const url = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${days}&interval=hourly`;
+                const symbol = 'BTCUSD';
+                const apiKey = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
+                const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}&timeseries=2920`;
                 log(`Fetching data from: ${url}`);
-                const response = await axios.get(url, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                    }
-                });
+                const response = await axios.get(url);
                 log(`Response received. Status: ${response.status}`);
                 
-                if (response.data && response.data.prices) {
-                    return response.data.prices.map(item => ({
-                        date: new Date(item[0]).toISOString(),
-                        close: item[1],
-                        open: item[1],
-                        high: item[1],
-                        low: item[1]
-                    })).reverse();
+                if (response.data && response.data.historical) {
+                    const data = response.data.historical.reverse();
+                    const filteredData = filterDataByTimeframe(data, timeframe);
+                    return filteredData.map(item => ({
+                        date: item.date,
+                        close: item.close,
+                        open: item.open,
+                        high: item.high,
+                        low: item.low
+                    }));
                 } else {
-                    throw new Error('Invalid data format received from CoinGecko API');
+                    throw new Error('Invalid data format received from Financial Modeling Prep API');
                 }
             } catch (error) {
                 log(`Error fetching data: ${error.message}`);
@@ -102,14 +101,26 @@
             }
         }
 
-        function timeframeTodays(timeframe) {
+        function filterDataByTimeframe(data, timeframe) {
+            const now = new Date();
+            let startDate;
             switch(timeframe) {
-                case '1hour': return 1;
-                case '6hour': return 7;
-                case '1day': return 30;
-                case '1week': return 90;
-                default: return 30;
+                case '1day':
+                    startDate = new Date(now.setDate(now.getDate() - 1));
+                    break;
+                case '1week':
+                    startDate = new Date(now.setDate(now.getDate() - 7));
+                    break;
+                case '1month':
+                    startDate = new Date(now.setMonth(now.getMonth() - 1));
+                    break;
+                case '3month':
+                    startDate = new Date(now.setMonth(now.getMonth() - 3));
+                    break;
+                default:
+                    startDate = new Date(now.setMonth(now.getMonth() - 1));
             }
+            return data.filter(item => new Date(item.date) >= startDate);
         }
 
         async function trackPosition() {
@@ -141,7 +152,7 @@
                     return;
                 }
 
-                const currentPrice = data[0].close;
+                const currentPrice = data[data.length - 1].close;
                 const pnl = direction === 'long' ? 
                     (currentPrice - openPrice) * amount :
                     (openPrice - currentPrice) * amount;
@@ -173,8 +184,8 @@
             return ma;
         }
 
-        function convertToSingaporeTime(date) {
-            return moment(date).tz('Asia/Singapore').format('YYYY-MM-DD HH:mm:ss');
+        function convertToSingaporeTime(dateString) {
+            return moment(dateString).tz('Asia/Singapore').format('YYYY-MM-DD HH:mm:ss');
         }
 
         function createChart(data) {
