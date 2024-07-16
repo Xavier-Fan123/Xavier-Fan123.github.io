@@ -9,17 +9,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
     <style>
-        htmlCopy<!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>比特币操作盈亏查看器</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
-    <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }
         .container { max-width: 100%; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         h1 { color: #333; text-align: center; font-size: 24px; }
@@ -31,18 +20,18 @@
         #result { margin-top: 20px; padding: 15px; background-color: #e7f3fe; border-radius: 4px; text-align: center; }
         .chart { margin-top: 20px; height: 400px; }
         .loading { text-align: center; font-size: 1.2em; color: #333; }
+        #debug { margin-top: 20px; padding: 10px; background-color: #f0f0f0; border: 1px solid #ccc; white-space: pre-wrap; font-size: 12px; }
         @media (max-width: 600px) {
             body { margin: 10px; }
             .container { padding: 10px; }
             h1 { font-size: 20px; }
             .chart { height: 300px; }
         }
-        #debug { margin-top: 20px; padding: 10px; background-color: #f0f0f0; border: 1px solid #ccc; white-space: pre-wrap; }
     </style>
 </head>
 <body>
     <div class="container">
-         <h1>比特币操作盈亏查看器</h1>
+        <h1>比特币操作盈亏查看器</h1>
         <div class="input-group">
             <label for="openPrice">开仓价格 (USD):</label>
             <input type="number" id="openPrice" step="0.01" required>
@@ -163,7 +152,100 @@
             }
         }
 
-        // ... 其余函数（calculateMA, convertToSingaporeTime, createChart）保持不变 ...
+        function calculateMA(data, period) {
+            const ma = [];
+            for (let i = 0; i < data.length; i++) {
+                if (i < period - 1) {
+                    ma.push(null);
+                } else {
+                    const sum = data.slice(i - period + 1, i + 1).reduce((acc, val) => acc + val.close, 0);
+                    ma.push(sum / period);
+                }
+            }
+            return ma;
+        }
+
+        function convertToSingaporeTime(date) {
+            return moment(date).tz('Asia/Singapore').format('YYYY-MM-DD HH:mm:ss');
+        }
+
+        function createChart(data) {
+            const trace = {
+                x: data.map(item => convertToSingaporeTime(item.date)),
+                close: data.map(item => item.close),
+                high: data.map(item => item.high),
+                low: data.map(item => item.low),
+                open: data.map(item => item.open),
+                type: 'candlestick',
+                xaxis: 'x',
+                yaxis: 'y',
+                name: 'BTC/USD'
+            };
+
+            const ma20 = calculateMA(data, 20);
+            const ma60 = calculateMA(data, 60);
+            const ma120 = calculateMA(data, 120);
+
+            const traceMA20 = {
+                x: data.map(item => convertToSingaporeTime(item.date)),
+                y: ma20,
+                type: 'scatter',
+                mode: 'lines',
+                line: {color: 'blue'},
+                name: 'MA20'
+            };
+
+            const traceMA60 = {
+                x: data.map(item => convertToSingaporeTime(item.date)),
+                y: ma60,
+                type: 'scatter',
+                mode: 'lines',
+                line: {color: 'green'},
+                name: 'MA60'
+            };
+
+            const traceMA120 = {
+                x: data.map(item => convertToSingaporeTime(item.date)),
+                y: ma120,
+                type: 'scatter',
+                mode: 'lines',
+                line: {color: 'red'},
+                name: 'MA120'
+            };
+
+            const layout = {
+                title: 'BTC/USD 价格走势图 (新加坡时间)',
+                dragmode: 'zoom',
+                showlegend: true,
+                xaxis: { 
+                    rangeslider: {visible: false}, 
+                    title: 'Date',
+                    tickformat: '%Y-%m-%d %H:%M:%S'
+                },
+                yaxis: { title: 'Price (USD)' },
+                legend: {
+                    x: 0,
+                    y: 1,
+                    traceorder: 'normal',
+                    font: {
+                        family: 'sans-serif',
+                        size: 12,
+                        color: '#000'
+                    },
+                    bgcolor: '#E2E2E2',
+                    bordercolor: '#FFFFFF',
+                    borderwidth: 2
+                }
+            };
+
+            const config = {
+                scrollZoom: true,
+                responsive: true,
+                displayModeBar: false
+            };
+
+            Plotly.newPlot('chart', [trace, traceMA20, traceMA60, traceMA120], layout, config);
+        }
 
         window.onload = function() {
             if (localStorage.getItem('openPrice')) {
