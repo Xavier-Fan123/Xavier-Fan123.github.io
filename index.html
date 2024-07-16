@@ -20,7 +20,7 @@
         #result { margin-top: 20px; padding: 15px; background-color: #e7f3fe; border-radius: 4px; text-align: center; }
         .chart { margin-top: 20px; height: 400px; }
         .loading { text-align: center; font-size: 1.2em; color: #333; }
-        #debug { margin-top: 20px; padding: 10px; background-color: #f0f0f0; border: 1px solid #ccc; white-space: pre-wrap; font-size: 12px; }
+        #debug { margin-top: 20px; padding: 10px; background-color: #f0f0f0; border: 1px solid #ccc; white-space: pre-wrap; font-size: 12px; overflow-wrap: break-word; }
         @media (max-width: 600px) {
             body { margin: 10px; }
             .container { padding: 10px; }
@@ -50,8 +50,6 @@
         <div class="input-group">
             <label for="timeframe">时间周期:</label>
             <select id="timeframe">
-                <option value="1min">1分钟</option>
-                <option value="5min">5分钟</option>
                 <option value="1hour">1小时</option>
                 <option value="6hour">6小时</option>
                 <option value="1day">1日</option>
@@ -65,8 +63,6 @@
     </div>
 
     <script>
-        const API_KEY = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
-        const symbol = 'BTCUSD';
         const debugElement = document.getElementById('debug');
 
         function log(message) {
@@ -76,31 +72,36 @@
 
         async function fetchData(timeframe) {
             try {
-                const url = `https://financialmodelingprep.com/api/v3/historical-chart/${timeframe}/${symbol}?apikey=${API_KEY}`;
+                const days = timeframeTodays(timeframe);
+                const url = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${days}&interval=hourly`;
                 log(`Fetching data from: ${url}`);
                 const response = await axios.get(url);
                 log(`Response received. Status: ${response.status}`);
-                return response.data;
-            } catch (error) {
-                log(`Error fetching data: ${error.message}`);
-                // 尝试使用备用API
-                try {
-                    const backupUrl = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily`;
-                    log(`Trying backup API: ${backupUrl}`);
-                    const backupResponse = await axios.get(backupUrl);
-                    log(`Backup response received. Status: ${backupResponse.status}`);
-                    // 转换CoinGecko数据格式以匹配原API
-                    return backupResponse.data.prices.map(item => ({
+                
+                if (response.data && response.data.prices) {
+                    return response.data.prices.map(item => ({
                         date: new Date(item[0]).toISOString(),
                         close: item[1],
                         open: item[1],
                         high: item[1],
                         low: item[1]
                     })).reverse();
-                } catch (backupError) {
-                    log(`Error fetching from backup API: ${backupError.message}`);
-                    throw backupError;
+                } else {
+                    throw new Error('Invalid data format received from CoinGecko API');
                 }
+            } catch (error) {
+                log(`Error fetching data: ${error.message}`);
+                throw error;
+            }
+        }
+
+        function timeframeTodays(timeframe) {
+            switch(timeframe) {
+                case '1hour': return 1;
+                case '6hour': return 7;
+                case '1day': return 30;
+                case '1week': return 90;
+                default: return 30;
             }
         }
 
