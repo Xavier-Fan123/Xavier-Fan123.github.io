@@ -57,7 +57,6 @@
     <script>
         const API_KEY = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
         const symbol = 'BTCUSD';
-        let chartInterval;
 
         async function fetchData(timeframe) {
             const url = `https://financialmodelingprep.com/api/v3/historical-chart/${timeframe}/${symbol}?apikey=${API_KEY}`;
@@ -70,7 +69,7 @@
         }
 
         function calculatePnL(openPrice, currentPrice, amount, direction) {
-            return direction === 'long' ?
+            return direction === 'long' ? 
                 (currentPrice - openPrice) * amount :
                 (openPrice - currentPrice) * amount;
         }
@@ -142,48 +141,15 @@
                 line: { color: 'red' }
             };
 
-            // 添加MACD（12, 26, 9）
-            const traceMACD = {
-                x: data.map(item => item.date),
-                y: data.map(item => item.macd),
-                type: 'bar',
-                name: 'MACD (12, 26, 9)',
-                yaxis: 'y2',
-                marker: { color: 'gray' }
-            };
-
-            // 添加交易量
-            const traceVolume = {
-                x: data.map(item => item.date),
-                y: data.map(item => item.volume),
-                type: 'bar',
-                name: 'Volume',
-                yaxis: 'y3',
-                marker: { color: 'blue' },
-                opacity: 0.5
-            };
-
             const layout = {
                 title: 'BTC/USD 价格走势图',
                 dragmode: 'zoom',
                 showlegend: true,
                 xaxis: { rangeslider: { visible: false }, title: 'Date' },
-                yaxis: { title: 'Price (USD)' },
-                yaxis2: { title: 'MACD', overlaying: 'y', side: 'right' },
-                yaxis3: { title: 'Volume', overlaying: 'y', side: 'right', position: 0.95 }
+                yaxis: { title: 'Price (USD)' }
             };
 
-            Plotly.newPlot('chart', [traceCandlestick, traceMA20, traceMA60, traceMA120, traceMACD, traceVolume], layout);
-
-            // 添加鼠标滚轮缩放功能
-            document.getElementById('chart').on('plotly_relayout', function (eventData) {
-                if (eventData['xaxis.autorange'] || eventData['yaxis.autorange']) {
-                    Plotly.relayout('chart', {
-                        'xaxis.autorange': false,
-                        'yaxis.autorange': false
-                    });
-                }
-            });
+            Plotly.newPlot('chart', [traceCandlestick, traceMA20, traceMA60, traceMA120], layout);
         }
 
         async function trackPosition() {
@@ -220,21 +186,6 @@
 
                 displayResult(openPrice, currentPrice, pnl);
                 createChart(data);
-
-                // 自动刷新图表
-                if (chartInterval) {
-                    clearInterval(chartInterval);
-                }
-                chartInterval = setInterval(function () {
-                    fetchData(timeframe)
-                        .then(newData => {
-                            if (newData.length > 0) {
-                                createChart(newData);
-                            }
-                        })
-                        .catch(error => console.error('Error refreshing chart:', error));
-                }, 3000);
-
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('result').innerHTML = "<p style='color: red;'>发生错误，请稍后再试</p>";
@@ -242,7 +193,7 @@
         }
 
         // 页面加载时恢复上次输入的数据
-        window.onload = function () {
+        window.onload = function() {
             if (localStorage.getItem('openPrice')) {
                 document.getElementById('openPrice').value = localStorage.getItem('openPrice');
                 document.getElementById('direction').value = localStorage.getItem('direction');
@@ -254,3 +205,4 @@
     </script>
 </body>
 </html>
+
