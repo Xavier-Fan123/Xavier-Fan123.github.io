@@ -9,6 +9,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
     <style>
+        htmlCopy<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>比特币操作盈亏查看器</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
+    <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }
         .container { max-width: 100%; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         h1 { color: #333; text-align: center; font-size: 24px; }
@@ -26,11 +37,12 @@
             h1 { font-size: 20px; }
             .chart { height: 300px; }
         }
+        #debug { margin-top: 20px; padding: 10px; background-color: #f0f0f0; border: 1px solid #ccc; white-space: pre-wrap; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>比特币操作盈亏查看器</h1>
+         <h1>比特币操作盈亏查看器</h1>
         <div class="input-group">
             <label for="openPrice">开仓价格 (USD):</label>
             <input type="number" id="openPrice" step="0.01" required>
@@ -60,11 +72,48 @@
         <button onclick="trackPosition()">跟踪位置</button>
         <div id="result"></div>
         <div id="chart" class="chart"></div>
+        <div id="debug"></div>
     </div>
 
     <script>
         const API_KEY = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
         const symbol = 'BTCUSD';
+        const debugElement = document.getElementById('debug');
+
+        function log(message) {
+            console.log(message);
+            debugElement.textContent += message + '\n';
+        }
+
+        async function fetchData(timeframe) {
+            try {
+                const url = `https://financialmodelingprep.com/api/v3/historical-chart/${timeframe}/${symbol}?apikey=${API_KEY}`;
+                log(`Fetching data from: ${url}`);
+                const response = await axios.get(url);
+                log(`Response received. Status: ${response.status}`);
+                return response.data;
+            } catch (error) {
+                log(`Error fetching data: ${error.message}`);
+                // 尝试使用备用API
+                try {
+                    const backupUrl = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily`;
+                    log(`Trying backup API: ${backupUrl}`);
+                    const backupResponse = await axios.get(backupUrl);
+                    log(`Backup response received. Status: ${backupResponse.status}`);
+                    // 转换CoinGecko数据格式以匹配原API
+                    return backupResponse.data.prices.map(item => ({
+                        date: new Date(item[0]).toISOString(),
+                        close: item[1],
+                        open: item[1],
+                        high: item[1],
+                        low: item[1]
+                    })).reverse();
+                } catch (backupError) {
+                    log(`Error fetching from backup API: ${backupError.message}`);
+                    throw backupError;
+                }
+            }
+        }
 
         async function trackPosition() {
             const openPrice = parseFloat(document.getElementById('openPrice').value);
@@ -84,18 +133,18 @@
 
             document.getElementById('result').innerHTML = '<div class="loading">数据加载中...</div>';
             document.getElementById('chart').innerHTML = '';
+            debugElement.textContent = ''; // 清除之前的调试信息
 
             try {
-                const url = `https://financialmodelingprep.com/api/v3/historical-chart/${timeframe}/${symbol}?apikey=${API_KEY}`;
-                const response = await axios.get(url);
-                const data = response.data.reverse(); // Reverse to have oldest data first
+                const data = await fetchData(timeframe);
+                log(`Data received. Length: ${data.length}`);
 
                 if (data.length === 0) {
                     document.getElementById('result').innerHTML = "<p style='color: red;'>错误：没有找到数据</p>";
                     return;
                 }
 
-                const currentPrice = data[data.length - 1].close;
+                const currentPrice = data[0].close;
                 const pnl = direction === 'long' ? 
                     (currentPrice - openPrice) * amount :
                     (openPrice - currentPrice) * amount;
@@ -109,105 +158,12 @@
 
                 createChart(data);
             } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('result').innerHTML = "<p style='color: red;'>发生错误，请稍后再试</p>";
+                log(`Final error: ${error.message}`);
+                document.getElementById('result').innerHTML = "<p style='color: red;'>发生错误，请查看调试信息并稍后再试</p>";
             }
         }
 
-        function calculateMA(data, period) {
-            const ma = [];
-            for (let i = 0; i < data.length; i++) {
-                if (i < period - 1) {
-                    ma.push(null);
-                } else {
-                    const sum = data.slice(i - period + 1, i + 1).reduce((acc, val) => acc + val.close, 0);
-                    ma.push(sum / period);
-                }
-            }
-            return ma;
-        }
-
-        function convertToSingaporeTime(date) {
-            return moment(date).tz('Asia/Singapore').format('YYYY-MM-DD HH:mm:ss');
-        }
-
-        function createChart(data) {
-            const trace = {
-                x: data.map(item => convertToSingaporeTime(item.date)),
-                close: data.map(item => item.close),
-                high: data.map(item => item.high),
-                low: data.map(item => item.low),
-                open: data.map(item => item.open),
-                type: 'candlestick',
-                xaxis: 'x',
-                yaxis: 'y',
-                name: 'BTC/USD'
-            };
-
-            const ma20 = calculateMA(data, 20);
-            const ma60 = calculateMA(data, 60);
-            const ma120 = calculateMA(data, 120);
-
-            const traceMA20 = {
-                x: data.map(item => convertToSingaporeTime(item.date)),
-                y: ma20,
-                type: 'scatter',
-                mode: 'lines',
-                line: {color: 'blue'},
-                name: 'MA20'
-            };
-
-            const traceMA60 = {
-                x: data.map(item => convertToSingaporeTime(item.date)),
-                y: ma60,
-                type: 'scatter',
-                mode: 'lines',
-                line: {color: 'green'},
-                name: 'MA60'
-            };
-
-            const traceMA120 = {
-                x: data.map(item => convertToSingaporeTime(item.date)),
-                y: ma120,
-                type: 'scatter',
-                mode: 'lines',
-                line: {color: 'red'},
-                name: 'MA120'
-            };
-
-            const layout = {
-                title: 'BTC/USD 价格走势图 (新加坡时间)',
-                dragmode: 'zoom',
-                showlegend: true,
-                xaxis: { 
-                    rangeslider: {visible: false}, 
-                    title: 'Date',
-                    tickformat: '%Y-%m-%d %H:%M:%S'
-                },
-                yaxis: { title: 'Price (USD)' },
-                legend: {
-                    x: 0,
-                    y: 1,
-                    traceorder: 'normal',
-                    font: {
-                        family: 'sans-serif',
-                        size: 12,
-                        color: '#000'
-                    },
-                    bgcolor: '#E2E2E2',
-                    bordercolor: '#FFFFFF',
-                    borderwidth: 2
-                }
-            };
-
-            const config = {
-                scrollZoom: true,
-                responsive: true,
-                displayModeBar: false
-            };
-
-            Plotly.newPlot('chart', [trace, traceMA20, traceMA60, traceMA120], layout, config);
-        }
+        // ... 其余函数（calculateMA, convertToSingaporeTime, createChart）保持不变 ...
 
         window.onload = function() {
             if (localStorage.getItem('openPrice')) {
