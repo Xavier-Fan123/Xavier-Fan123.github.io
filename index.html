@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }
-        .container { max-width: 800px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .container { max-width: 1000px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         h1 { color: #333; text-align: center; }
         .input-group { margin-bottom: 15px; }
         label { display: inline-block; width: 120px; font-weight: bold; }
@@ -16,7 +16,7 @@
         button { width: 100%; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
         button:hover { background-color: #45a049; }
         #result { margin-top: 20px; padding: 15px; background-color: #e7f3fe; border-radius: 4px; text-align: center; }
-        .chart { margin-top: 20px; }
+        .chart { margin-top: 20px; height: 600px; }
         .loading { text-align: center; font-size: 1.2em; color: #333; }
     </style>
 </head>
@@ -57,7 +57,6 @@
     <script>
         const API_KEY = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
         const symbol = 'BTCUSD';
-        let chartInterval;
 
         async function trackPosition() {
             const openPrice = parseFloat(document.getElementById('openPrice').value);
@@ -70,46 +69,25 @@
                 return;
             }
 
-            // Save inputs to localStorage
             localStorage.setItem('openPrice', openPrice);
             localStorage.setItem('direction', direction);
             localStorage.setItem('amount', amount);
             localStorage.setItem('timeframe', timeframe);
 
-            // Show loading indicator
             document.getElementById('result').innerHTML = '<div class="loading">数据加载中...</div>';
             document.getElementById('chart').innerHTML = '';
 
-            // Clear previous interval
-            if (chartInterval) {
-                clearInterval(chartInterval);
-            }
-
             try {
-                await updateData(openPrice, direction, amount, timeframe);
-                chartInterval = setInterval(async () => {
-                    await updateData(openPrice, direction, amount, timeframe);
-                }, 60000); // Refresh data every minute
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('result').innerHTML = "<p style='color: red;'>发生错误，请稍后再试</p>";
-            }
-        }
-
-        async function updateData(openPrice, direction, amount, timeframe) {
-            try {
-                console.log(`Fetching data for timeframe: ${timeframe}`);
                 const url = `https://financialmodelingprep.com/api/v3/historical-chart/${timeframe}/${symbol}?apikey=${API_KEY}`;
                 const response = await axios.get(url);
-                console.log(`Data fetched:`, response.data);
-                const data = response.data;
+                const data = response.data.reverse(); // Reverse to have oldest data first
 
                 if (data.length === 0) {
                     document.getElementById('result').innerHTML = "<p style='color: red;'>错误：没有找到数据</p>";
                     return;
                 }
 
-                const currentPrice = data[0].close;
+                const currentPrice = data[data.length - 1].close;
                 const pnl = direction === 'long' ? 
                     (currentPrice - openPrice) * amount :
                     (openPrice - currentPrice) * amount;
@@ -129,23 +107,20 @@
         }
 
         function calculateMA(data, period) {
-            let result = [];
+            const ma = [];
             for (let i = 0; i < data.length; i++) {
                 if (i < period - 1) {
-                    result.push(null);
+                    ma.push(null);
                 } else {
-                    let sum = 0;
-                    for (let j = 0; j < period; j++) {
-                        sum += data[i - j].close;
-                    }
-                    result.push(sum / period);
+                    const sum = data.slice(i - period + 1, i + 1).reduce((acc, val) => acc + val.close, 0);
+                    ma.push(sum / period);
                 }
             }
-            return result;
+            return ma;
         }
 
         function createChart(data) {
-            const traceCandlestick = {
+            const trace = {
                 x: data.map(item => item.date),
                 close: data.map(item => item.close),
                 high: data.map(item => item.high),
@@ -154,37 +129,38 @@
                 type: 'candlestick',
                 xaxis: 'x',
                 yaxis: 'y',
-                name: '价格走势'
+                name: 'BTC/USD'
             };
 
             const ma20 = calculateMA(data, 20);
+            const ma60 = calculateMA(data, 60);
+            const ma120 = calculateMA(data, 120);
+
             const traceMA20 = {
                 x: data.map(item => item.date),
                 y: ma20,
                 type: 'scatter',
                 mode: 'lines',
-                name: 'MA20',
-                line: { color: 'blue' }
+                line: {color: 'blue'},
+                name: 'MA20'
             };
 
-            const ma60 = calculateMA(data, 60);
             const traceMA60 = {
                 x: data.map(item => item.date),
                 y: ma60,
                 type: 'scatter',
                 mode: 'lines',
-                name: 'MA60',
-                line: { color: 'green' }
+                line: {color: 'green'},
+                name: 'MA60'
             };
 
-            const ma120 = calculateMA(data, 120);
             const traceMA120 = {
                 x: data.map(item => item.date),
                 y: ma120,
                 type: 'scatter',
                 mode: 'lines',
-                name: 'MA120',
-                line: { color: 'red' }
+                line: {color: 'red'},
+                name: 'MA120'
             };
 
             const layout = {
@@ -193,13 +169,24 @@
                 showlegend: true,
                 xaxis: { rangeslider: {visible: false}, title: 'Date' },
                 yaxis: { title: 'Price (USD)' },
-                autosize: true
+                legend: {
+                    x: 0,
+                    y: 1,
+                    traceorder: 'normal',
+                    font: {
+                        family: 'sans-serif',
+                        size: 12,
+                        color: '#000'
+                    },
+                    bgcolor: '#E2E2E2',
+                    bordercolor: '#FFFFFF',
+                    borderwidth: 2
+                }
             };
 
-            Plotly.newPlot('chart', [traceCandlestick, traceMA20, traceMA60, traceMA120], layout, {responsive: true});
+            Plotly.newPlot('chart', [trace, traceMA20, traceMA60, traceMA120], layout);
         }
 
-        // 页面加载时恢复上次输入的数据
         window.onload = function() {
             if (localStorage.getItem('openPrice')) {
                 document.getElementById('openPrice').value = localStorage.getItem('openPrice');
@@ -212,6 +199,7 @@
     </script>
 </body>
 </html>
+
 
 
 
