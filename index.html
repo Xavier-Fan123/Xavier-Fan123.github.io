@@ -57,6 +57,7 @@
     <script>
         const API_KEY = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
         const symbol = 'BTCUSD';
+        let chartInterval;
 
         async function fetchData(timeframe) {
             const url = `https://financialmodelingprep.com/api/v3/historical-chart/${timeframe}/${symbol}?apikey=${API_KEY}`;
@@ -150,6 +151,16 @@
             };
 
             Plotly.newPlot('chart', [traceCandlestick, traceMA20, traceMA60, traceMA120], layout);
+
+            // 添加鼠标滚轮缩放功能
+            document.getElementById('chart').on('plotly_relayout', function(eventData) {
+                if (eventData['xaxis.autorange'] || eventData['yaxis.autorange']) {
+                    Plotly.relayout('chart', {
+                        'xaxis.autorange': false,
+                        'yaxis.autorange': false
+                    });
+                }
+            });
         }
 
         async function trackPosition() {
@@ -186,6 +197,21 @@
 
                 displayResult(openPrice, currentPrice, pnl);
                 createChart(data);
+
+                // 自动刷新图表
+                if (chartInterval) {
+                    clearInterval(chartInterval);
+                }
+                chartInterval = setInterval(function() {
+                    fetchData(timeframe)
+                        .then(newData => {
+                            if (newData.length > 0) {
+                                createChart(newData);
+                            }
+                        })
+                        .catch(error => console.error('Error refreshing chart:', error));
+                }, 3000);
+
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('result').innerHTML = "<p style='color: red;'>发生错误，请稍后再试</p>";
