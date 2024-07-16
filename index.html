@@ -71,62 +71,64 @@
         }
 
         async function fetchData(timeframe) {
-    try {
-        const symbol = 'BTCUSD';
-        const apiKey = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
-        const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}&timeseries=2920`;
-        log(`Fetching data from: ${url}`);
-        const response = await axios.get(url);
-        log(`Response received. Status: ${response.status}`);
-        
-        if (response.data && response.data.historical) {
-            const data = response.data.historical.reverse();
-            log(`First 5 data points: ${JSON.stringify(data.slice(0, 5))}`);
-            const filteredData = filterDataByTimeframe(data, timeframe);
-            log(`Filtered data length: ${filteredData.length}`);
-            return filteredData.map(item => ({
-                date: item.date,
-                close: item.close,
-                open: item.open,
-                high: item.high,
-                low: item.low
-            }));
-        } else {
-            throw new Error('Invalid data format received from Financial Modeling Prep API');
+            try {
+                const symbol = 'BTCUSD';
+                const apiKey = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
+                const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}&timeseries=2920`;
+                log(`Fetching data from: ${url}`);
+                const response = await axios.get(url);
+                log(`Response received. Status: ${response.status}`);
+                
+                if (response.data && response.data.historical) {
+                    const data = response.data.historical.reverse();
+                    log(`Raw data length: ${data.length}`);
+                    log(`First 5 data points: ${JSON.stringify(data.slice(0, 5))}`);
+                    const filteredData = filterDataByTimeframe(data, timeframe);
+                    log(`Filtered data length: ${filteredData.length}`);
+                    return filteredData.map(item => ({
+                        date: item.date,
+                        close: item.close,
+                        open: item.open,
+                        high: item.high,
+                        low: item.low
+                    }));
+                } else {
+                    throw new Error('Invalid data format received from Financial Modeling Prep API');
+                }
+            } catch (error) {
+                log(`Error fetching data: ${error.message}`);
+                if (error.response) {
+                    log(`Error details: ${JSON.stringify(error.response.data)}`);
+                }
+                throw error;
+            }
         }
-    } catch (error) {
-        log(`Error fetching data: ${error.message}`);
-        if (error.response) {
-            log(`Error details: ${JSON.stringify(error.response.data)}`);
-        }
-        throw error;
-    }
-}
 
         function filterDataByTimeframe(data, timeframe) {
-    const now = new Date();
-    let startDate;
-    switch(timeframe) {
-        case '1day':
-            startDate = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-            break;
-        case '1week':
-            startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-            break;
-        case '1month':
-            startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-            break;
-        case '3month':
-            startDate = new Date(now.getTime() - (90 * 24 * 60 * 60 * 1000));
-            break;
-        default:
-            startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-    }
+            const now = new Date();
+            let startDate;
+            switch(timeframe) {
+                case '1day':
+                    startDate = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+                    break;
+                case '1week':
+                    startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+                    break;
+                case '1month':
+                    startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+                    break;
+                case '3month':
+                    startDate = new Date(now.getTime() - (90 * 24 * 60 * 60 * 1000));
+                    break;
+                default:
+                    startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+            }
 
-    log(`Filtering data from: ${startDate.toISOString()} to ${now.toISOString()}`);
-
-    return data.filter(item => new Date(item.date) >= startDate);
-}
+            log(`Filtering data from: ${startDate.toISOString()} to ${now.toISOString()}`);
+            const filtered = data.filter(item => new Date(item.date) >= startDate);
+            log(`Filtered data length after processing: ${filtered.length}`);
+            return filtered;
+        }
 
         async function trackPosition() {
             const openPrice = parseFloat(document.getElementById('openPrice').value);
@@ -171,115 +173,44 @@
 
                 createChart(data);
             } catch (error) {
-                log(`Final error: ${error.message}`);
-                document.getElementById('result').innerHTML = "<p style='color: red;'>发生错误，请查看调试信息并稍后再试</p>";
+                log(`Final Error: ${error.message}`);
+                document.getElementById('result').innerHTML = "<p style='color: red;'>错误：无法获取数据</p>";
             }
-        }
-
-        function calculateMA(data, period) {
-            const ma = [];
-            for (let i = 0; i < data.length; i++) {
-                if (i < period - 1) {
-                    ma.push(null);
-                } else {
-                    const sum = data.slice(i - period + 1, i + 1).reduce((acc, val) => acc + val.close, 0);
-                    ma.push(sum / period);
-                }
-            }
-            return ma;
-        }
-
-        function convertToSingaporeTime(dateString) {
-            return moment(dateString).tz('Asia/Singapore').format('YYYY-MM-DD HH:mm:ss');
         }
 
         function createChart(data) {
+            const dates = data.map(item => item.date);
+            const prices = data.map(item => item.close);
+
             const trace = {
-                x: data.map(item => convertToSingaporeTime(item.date)),
-                close: data.map(item => item.close),
-                high: data.map(item => item.high),
-                low: data.map(item => item.low),
-                open: data.map(item => item.open),
-                type: 'candlestick',
-                xaxis: 'x',
-                yaxis: 'y',
-                name: 'BTC/USD'
-            };
-
-            const ma20 = calculateMA(data, 20);
-            const ma60 = calculateMA(data, 60);
-            const ma120 = calculateMA(data, 120);
-
-            const traceMA20 = {
-                x: data.map(item => convertToSingaporeTime(item.date)),
-                y: ma20,
-                type: 'scatter',
-                mode: 'lines',
-                line: {color: 'blue'},
-                name: 'MA20'
-            };
-
-            const traceMA60 = {
-                x: data.map(item => convertToSingaporeTime(item.date)),
-                y: ma60,
-                type: 'scatter',
-                mode: 'lines',
-                line: {color: 'green'},
-                name: 'MA60'
-            };
-
-            const traceMA120 = {
-                x: data.map(item => convertToSingaporeTime(item.date)),
-                y: ma120,
-                type: 'scatter',
-                mode: 'lines',
-                line: {color: 'red'},
-                name: 'MA120'
+                x: dates,
+                y: prices,
+                type: 'scatter'
             };
 
             const layout = {
-                title: 'BTC/USD 价格走势图 (新加坡时间)',
-                dragmode: 'zoom',
-                showlegend: true,
-                xaxis: { 
-                    rangeslider: {visible: false}, 
-                    title: 'Date',
-                    tickformat: '%Y-%m-%d %H:%M:%S'
-                },
-                yaxis: { title: 'Price (USD)' },
-                legend: {
-                    x: 0,
-                    y: 1,
-                    traceorder: 'normal',
-                    font: {
-                        family: 'sans-serif',
-                        size: 12,
-                        color: '#000'
-                    },
-                    bgcolor: '#E2E2E2',
-                    bordercolor: '#FFFFFF',
-                    borderwidth: 2
-                }
+                title: 'BTC/USD 历史价格',
+                xaxis: { title: '日期' },
+                yaxis: { title: '价格 (USD)' }
             };
 
-            const config = {
-                scrollZoom: true,
-                responsive: true,
-                displayModeBar: false
-            };
-
-            Plotly.newPlot('chart', [trace, traceMA20, traceMA60, traceMA120], layout, config);
+            Plotly.newPlot('chart', [trace], layout);
         }
 
-        window.onload = function() {
-            if (localStorage.getItem('openPrice')) {
-                document.getElementById('openPrice').value = localStorage.getItem('openPrice');
-                document.getElementById('direction').value = localStorage.getItem('direction');
-                document.getElementById('amount').value = localStorage.getItem('amount');
-                document.getElementById('timeframe').value = localStorage.getItem('timeframe');
+        document.addEventListener('DOMContentLoaded', () => {
+            const openPrice = localStorage.getItem('openPrice');
+            const direction = localStorage.getItem('direction');
+            const amount = localStorage.getItem('amount');
+            const timeframe = localStorage.getItem('timeframe');
+
+            if (openPrice && direction && amount && timeframe) {
+                document.getElementById('openPrice').value = openPrice;
+                document.getElementById('direction').value = direction;
+                document.getElementById('amount').value = amount;
+                document.getElementById('timeframe').value = timeframe;
                 trackPosition();
             }
-        }
+        });
     </script>
 </body>
 </html>
