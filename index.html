@@ -125,7 +125,10 @@
             }
 
             log(`Filtering data from: ${startDate.toISOString()} to ${now.toISOString()}`);
-            const filtered = data.filter(item => new Date(item.date) >= startDate);
+            const filtered = data.filter(item => {
+                const itemDate = new Date(item.date);
+                return itemDate >= startDate && itemDate <= now;
+            });
             log(`Filtered data length after processing: ${filtered.length}`);
             return filtered;
         }
@@ -214,4 +217,3 @@
     </script>
 </body>
 </html>
-
