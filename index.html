@@ -1,14 +1,4 @@
-async function fetchData(timeframe) {
-    try {
-        const days = timeframeTodays(timeframe);
-        const url = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${days}&interval=hourly`;
-        log(`Fetching data from: ${url}`);
-        const response = await axios.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-        });
-        log(`Response received. Status: ${response.status}`);<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -85,7 +75,11 @@ async function fetchData(timeframe) {
                 const days = timeframeTodays(timeframe);
                 const url = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${days}&interval=hourly`;
                 log(`Fetching data from: ${url}`);
-                const response = await axios.get(url);
+                const response = await axios.get(url, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                    }
+                });
                 log(`Response received. Status: ${response.status}`);
                 
                 if (response.data && response.data.prices) {
@@ -101,6 +95,9 @@ async function fetchData(timeframe) {
                 }
             } catch (error) {
                 log(`Error fetching data: ${error.message}`);
+                if (error.response) {
+                    log(`Error details: ${JSON.stringify(error.response.data)}`);
+                }
                 throw error;
             }
         }
@@ -270,8 +267,3 @@ async function fetchData(timeframe) {
     </script>
 </body>
 </html>
-} catch (error) {
-        log(`Error fetching data: ${error.message}`);
-        throw error;
-    }
-}
