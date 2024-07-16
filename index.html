@@ -70,7 +70,7 @@
         }
 
         function calculatePnL(openPrice, currentPrice, amount, direction) {
-            return direction === 'long' ? 
+            return direction === 'long' ?
                 (currentPrice - openPrice) * amount :
                 (openPrice - currentPrice) * amount;
         }
@@ -142,18 +142,41 @@
                 line: { color: 'red' }
             };
 
+            // 添加MACD（12, 26, 9）
+            const traceMACD = {
+                x: data.map(item => item.date),
+                y: data.map(item => item.macd),
+                type: 'bar',
+                name: 'MACD (12, 26, 9)',
+                yaxis: 'y2',
+                marker: { color: 'gray' }
+            };
+
+            // 添加交易量
+            const traceVolume = {
+                x: data.map(item => item.date),
+                y: data.map(item => item.volume),
+                type: 'bar',
+                name: 'Volume',
+                yaxis: 'y3',
+                marker: { color: 'blue' },
+                opacity: 0.5
+            };
+
             const layout = {
                 title: 'BTC/USD 价格走势图',
                 dragmode: 'zoom',
                 showlegend: true,
                 xaxis: { rangeslider: { visible: false }, title: 'Date' },
-                yaxis: { title: 'Price (USD)' }
+                yaxis: { title: 'Price (USD)' },
+                yaxis2: { title: 'MACD', overlaying: 'y', side: 'right' },
+                yaxis3: { title: 'Volume', overlaying: 'y', side: 'right', position: 0.95 }
             };
 
-            Plotly.newPlot('chart', [traceCandlestick, traceMA20, traceMA60, traceMA120], layout);
+            Plotly.newPlot('chart', [traceCandlestick, traceMA20, traceMA60, traceMA120, traceMACD, traceVolume], layout);
 
             // 添加鼠标滚轮缩放功能
-            document.getElementById('chart').on('plotly_relayout', function(eventData) {
+            document.getElementById('chart').on('plotly_relayout', function (eventData) {
                 if (eventData['xaxis.autorange'] || eventData['yaxis.autorange']) {
                     Plotly.relayout('chart', {
                         'xaxis.autorange': false,
@@ -202,7 +225,7 @@
                 if (chartInterval) {
                     clearInterval(chartInterval);
                 }
-                chartInterval = setInterval(function() {
+                chartInterval = setInterval(function () {
                     fetchData(timeframe)
                         .then(newData => {
                             if (newData.length > 0) {
@@ -219,7 +242,7 @@
         }
 
         // 页面加载时恢复上次输入的数据
-        window.onload = function() {
+        window.onload = function () {
             if (localStorage.getItem('openPrice')) {
                 document.getElementById('openPrice').value = localStorage.getItem('openPrice');
                 document.getElementById('direction').value = localStorage.getItem('direction');
