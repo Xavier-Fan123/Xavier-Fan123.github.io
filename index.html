@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>比特币操作盈亏查看器</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -10,16 +10,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }
-        .container { max-width: 1000px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { color: #333; text-align: center; }
+        .container { max-width: 100%; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; font-size: 24px; }
         .input-group { margin-bottom: 15px; }
-        label { display: inline-block; width: 120px; font-weight: bold; }
-        input, select { width: calc(100% - 130px); padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
         button { width: 100%; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
         button:hover { background-color: #45a049; }
         #result { margin-top: 20px; padding: 15px; background-color: #e7f3fe; border-radius: 4px; text-align: center; }
-        .chart { margin-top: 20px; height: 600px; }
+        .chart { margin-top: 20px; height: 400px; }
         .loading { text-align: center; font-size: 1.2em; color: #333; }
+        @media (max-width: 600px) {
+            body { margin: 10px; }
+            .container { padding: 10px; }
+            h1 { font-size: 20px; }
+            .chart { height: 300px; }
+        }
     </style>
 </head>
 <body>
@@ -196,7 +202,8 @@
 
             const config = {
                 scrollZoom: true,
-                responsive: true
+                responsive: true,
+                displayModeBar: false
             };
 
             Plotly.newPlot('chart', [trace, traceMA20, traceMA60, traceMA120], layout, config);
@@ -214,7 +221,3 @@
     </script>
 </body>
 </html>
-
-
-
-
