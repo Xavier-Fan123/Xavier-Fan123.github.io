@@ -2,31 +2,22 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>比特币操作盈亏查看器</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }
-        .container { max-width: 100%; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { color: #333; text-align: center; font-size: 24px; }
+        .container { max-width: 800px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; }
         .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        label { display: inline-block; width: 120px; font-weight: bold; }
+        input, select { width: calc(100% - 130px); padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
         button { width: 100%; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
         button:hover { background-color: #45a049; }
         #result { margin-top: 20px; padding: 15px; background-color: #e7f3fe; border-radius: 4px; text-align: center; }
-        .chart { margin-top: 20px; height: 400px; }
+        .chart { margin-top: 20px; }
         .loading { text-align: center; font-size: 1.2em; color: #333; }
-        #debug { margin-top: 20px; padding: 10px; background-color: #f0f0f0; border: 1px solid #ccc; white-space: pre-wrap; font-size: 12px; overflow-wrap: break-word; }
-        @media (max-width: 600px) {
-            body { margin: 10px; }
-            .container { padding: 10px; }
-            h1 { font-size: 20px; }
-            .chart { height: 300px; }
-        }
     </style>
 </head>
 <body>
@@ -50,87 +41,115 @@
         <div class="input-group">
             <label for="timeframe">时间周期:</label>
             <select id="timeframe">
+                <option value="1min">1分钟</option>
+                <option value="5min">5分钟</option>
+                <option value="1hour">1小时</option>
+                <option value="6hour">6小时</option>
                 <option value="1day">1日</option>
                 <option value="1week">1周</option>
-                <option value="1month">1月</option>
-                <option value="3month">3月</option>
             </select>
         </div>
         <button onclick="trackPosition()">跟踪位置</button>
         <div id="result"></div>
         <div id="chart" class="chart"></div>
-        <div id="debug"></div>
     </div>
 
     <script>
-        const debugElement = document.getElementById('debug');
-
-        function log(message) {
-            console.log(message);
-            debugElement.textContent += message + '\n';
-        }
+        const API_KEY = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
+        const symbol = 'BTCUSD';
 
         async function fetchData(timeframe) {
+            const url = `https://financialmodelingprep.com/api/v3/historical-chart/${timeframe}/${symbol}?apikey=${API_KEY}`;
             try {
-                const symbol = 'BTCUSD';
-                const apiKey = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
-                const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}&timeseries=2920`;
-                log(`Fetching data from: ${url}`);
                 const response = await axios.get(url);
-                log(`Response received. Status: ${response.status}`);
-                
-                if (response.data && response.data.historical) {
-                    const data = response.data.historical.reverse();
-                    log(`Raw data length: ${data.length}`);
-                    log(`First 5 data points: ${JSON.stringify(data.slice(0, 5))}`);
-                    const filteredData = filterDataByTimeframe(data, timeframe);
-                    log(`Filtered data length: ${filteredData.length}`);
-                    return filteredData.map(item => ({
-                        date: item.date,
-                        close: item.close,
-                        open: item.open,
-                        high: item.high,
-                        low: item.low
-                    }));
-                } else {
-                    throw new Error('Invalid data format received from Financial Modeling Prep API');
-                }
+                return response.data;
             } catch (error) {
-                log(`Error fetching data: ${error.message}`);
-                if (error.response) {
-                    log(`Error details: ${JSON.stringify(error.response.data)}`);
-                }
-                throw error;
+                throw new Error('数据加载失败，请稍后再试');
             }
         }
 
-        function filterDataByTimeframe(data, timeframe) {
-            const now = new Date();
-            let startDate;
-            switch(timeframe) {
-                case '1day':
-                    startDate = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-                    break;
-                case '1week':
-                    startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-                    break;
-                case '1month':
-                    startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-                    break;
-                case '3month':
-                    startDate = new Date(now.getTime() - (90 * 24 * 60 * 60 * 1000));
-                    break;
-                default:
-                    startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-            }
+        function calculatePnL(openPrice, currentPrice, amount, direction) {
+            return direction === 'long' ? 
+                (currentPrice - openPrice) * amount :
+                (openPrice - currentPrice) * amount;
+        }
 
-            log(`Filtering data from: ${startDate.toISOString()} to ${now.toISOString()}`);
-            const filtered = data.filter(item => {
-                const itemDate = new Date(item.date);
-                return itemDate >= startDate && itemDate <= now;
-            });
-            log(`Filtered data length after processing: ${filtered.length}`);
-            return filtered;
+        function displayResult(openPrice, currentPrice, pnl) {
+            document.getElementById('result').innerHTML = `
+                <h2>结果</h2>
+                <p>开仓价格: $${openPrice.toFixed(2)}</p>
+                <p>当前价格: $${currentPrice.toFixed(2)}</p>
+                <p>盈亏: $${pnl.toFixed(2)}</p>
+            `;
+        }
+
+        function calculateMA(data, period) {
+            let result = [];
+            for (let i = 0; i < data.length; i++) {
+                if (i < period - 1) {
+                    result.push(null);
+                } else {
+                    let sum = 0;
+                    for (let j = 0; j < period; j++) {
+                        sum += data[i - j].close;
+                    }
+                    result.push(sum / period);
+                }
+            }
+            return result;
+        }
+
+        function createChart(data) {
+            const traceCandlestick = {
+                x: data.map(item => item.date),
+                close: data.map(item => item.close),
+                high: data.map(item => item.high),
+                low: data.map(item => item.low),
+                open: data.map(item => item.open),
+                type: 'candlestick',
+                xaxis: 'x',
+                yaxis: 'y'
+            };
+
+            const ma20 = calculateMA(data, 20);
+            const traceMA20 = {
+                x: data.map(item => item.date),
+                y: ma20,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'MA20',
+                line: { color: 'blue' }
+            };
+
+            const ma60 = calculateMA(data, 60);
+            const traceMA60 = {
+                x: data.map(item => item.date),
+                y: ma60,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'MA60',
+                line: { color: 'green' }
+            };
+
+            const ma120 = calculateMA(data, 120);
+            const traceMA120 = {
+                x: data.map(item => item.date),
+                y: ma120,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'MA120',
+                line: { color: 'red' }
+            };
+
+            const layout = {
+                title: 'BTC/USD 价格走势图',
+                dragmode: 'zoom',
+                showlegend: true,
+                xaxis: { rangeslider: { visible: false }, title: 'Date' },
+                yaxis: { title: 'Price (USD)' }
+            };
+
+            Plotly.newPlot('chart', [traceCandlestick, traceMA20, traceMA60, traceMA120], layout);
         }
 
         async function trackPosition() {
@@ -144,76 +163,45 @@
                 return;
             }
 
+            // Save inputs to localStorage
             localStorage.setItem('openPrice', openPrice);
             localStorage.setItem('direction', direction);
             localStorage.setItem('amount', amount);
             localStorage.setItem('timeframe', timeframe);
 
+            // Show loading indicator
             document.getElementById('result').innerHTML = '<div class="loading">数据加载中...</div>';
             document.getElementById('chart').innerHTML = '';
-            debugElement.textContent = ''; // 清除之前的调试信息
 
             try {
                 const data = await fetchData(timeframe);
-                log(`Data received. Length: ${data.length}`);
 
                 if (data.length === 0) {
                     document.getElementById('result').innerHTML = "<p style='color: red;'>错误：没有找到数据</p>";
                     return;
                 }
 
-                const currentPrice = data[data.length - 1].close;
-                const pnl = direction === 'long' ? 
-                    (currentPrice - openPrice) * amount :
-                    (openPrice - currentPrice) * amount;
+                const currentPrice = data[0].close;
+                const pnl = calculatePnL(openPrice, currentPrice, amount, direction);
 
-                document.getElementById('result').innerHTML = `
-                    <h2>结果</h2>
-                    <p>开仓价格: $${openPrice.toFixed(2)}</p>
-                    <p>当前价格: $${currentPrice.toFixed(2)}</p>
-                    <p>盈亏: $${pnl.toFixed(2)}</p>
-                `;
-
+                displayResult(openPrice, currentPrice, pnl);
                 createChart(data);
             } catch (error) {
-                log(`Final Error: ${error.message}`);
-                document.getElementById('result').innerHTML = "<p style='color: red;'>错误：无法获取数据</p>";
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = "<p style='color: red;'>发生错误，请稍后再试</p>";
             }
         }
 
-        function createChart(data) {
-            const dates = data.map(item => item.date);
-            const prices = data.map(item => item.close);
-
-            const trace = {
-                x: dates,
-                y: prices,
-                type: 'scatter'
-            };
-
-            const layout = {
-                title: 'BTC/USD 历史价格',
-                xaxis: { title: '日期' },
-                yaxis: { title: '价格 (USD)' }
-            };
-
-            Plotly.newPlot('chart', [trace], layout);
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const openPrice = localStorage.getItem('openPrice');
-            const direction = localStorage.getItem('direction');
-            const amount = localStorage.getItem('amount');
-            const timeframe = localStorage.getItem('timeframe');
-
-            if (openPrice && direction && amount && timeframe) {
-                document.getElementById('openPrice').value = openPrice;
-                document.getElementById('direction').value = direction;
-                document.getElementById('amount').value = amount;
-                document.getElementById('timeframe').value = timeframe;
+        // 页面加载时恢复上次输入的数据
+        window.onload = function() {
+            if (localStorage.getItem('openPrice')) {
+                document.getElementById('openPrice').value = localStorage.getItem('openPrice');
+                document.getElementById('direction').value = localStorage.getItem('direction');
+                document.getElementById('amount').value = localStorage.getItem('amount');
+                document.getElementById('timeframe').value = localStorage.getItem('timeframe');
                 trackPosition();
             }
-        });
+        }
     </script>
 </body>
 </html>
