@@ -71,57 +71,62 @@
         }
 
         async function fetchData(timeframe) {
-            try {
-                const symbol = 'BTCUSD';
-                const apiKey = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
-                const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}&timeseries=2920`;
-                log(`Fetching data from: ${url}`);
-                const response = await axios.get(url);
-                log(`Response received. Status: ${response.status}`);
-                
-                if (response.data && response.data.historical) {
-                    const data = response.data.historical.reverse();
-                    const filteredData = filterDataByTimeframe(data, timeframe);
-                    return filteredData.map(item => ({
-                        date: item.date,
-                        close: item.close,
-                        open: item.open,
-                        high: item.high,
-                        low: item.low
-                    }));
-                } else {
-                    throw new Error('Invalid data format received from Financial Modeling Prep API');
-                }
-            } catch (error) {
-                log(`Error fetching data: ${error.message}`);
-                if (error.response) {
-                    log(`Error details: ${JSON.stringify(error.response.data)}`);
-                }
-                throw error;
-            }
+    try {
+        const symbol = 'BTCUSD';
+        const apiKey = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
+        const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}&timeseries=2920`;
+        log(`Fetching data from: ${url}`);
+        const response = await axios.get(url);
+        log(`Response received. Status: ${response.status}`);
+        
+        if (response.data && response.data.historical) {
+            const data = response.data.historical.reverse();
+            log(`First 5 data points: ${JSON.stringify(data.slice(0, 5))}`);
+            const filteredData = filterDataByTimeframe(data, timeframe);
+            log(`Filtered data length: ${filteredData.length}`);
+            return filteredData.map(item => ({
+                date: item.date,
+                close: item.close,
+                open: item.open,
+                high: item.high,
+                low: item.low
+            }));
+        } else {
+            throw new Error('Invalid data format received from Financial Modeling Prep API');
         }
+    } catch (error) {
+        log(`Error fetching data: ${error.message}`);
+        if (error.response) {
+            log(`Error details: ${JSON.stringify(error.response.data)}`);
+        }
+        throw error;
+    }
+}
 
         function filterDataByTimeframe(data, timeframe) {
-            const now = new Date();
-            let startDate;
-            switch(timeframe) {
-                case '1day':
-                    startDate = new Date(now.setDate(now.getDate() - 1));
-                    break;
-                case '1week':
-                    startDate = new Date(now.setDate(now.getDate() - 7));
-                    break;
-                case '1month':
-                    startDate = new Date(now.setMonth(now.getMonth() - 1));
-                    break;
-                case '3month':
-                    startDate = new Date(now.setMonth(now.getMonth() - 3));
-                    break;
-                default:
-                    startDate = new Date(now.setMonth(now.getMonth() - 1));
-            }
-            return data.filter(item => new Date(item.date) >= startDate);
-        }
+    const now = new Date();
+    let startDate;
+    switch(timeframe) {
+        case '1day':
+            startDate = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+            break;
+        case '1week':
+            startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+            break;
+        case '1month':
+            startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+            break;
+        case '3month':
+            startDate = new Date(now.getTime() - (90 * 24 * 60 * 60 * 1000));
+            break;
+        default:
+            startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+    }
+
+    log(`Filtering data from: ${startDate.toISOString()} to ${now.toISOString()}`);
+
+    return data.filter(item => new Date(item.date) >= startDate);
+}
 
         async function trackPosition() {
             const openPrice = parseFloat(document.getElementById('openPrice').value);
