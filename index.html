@@ -1,208 +1,259 @@
-<!DOCTYPE html>
-<html lang="zh">
+﻿<!DOCTYPE html>
+<html lang='en'>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>比特币操作盈亏查看器</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }
-        .container { max-width: 800px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { color: #333; text-align: center; }
-        .input-group { margin-bottom: 15px; }
-        label { display: inline-block; width: 120px; font-weight: bold; }
-        input, select { width: calc(100% - 130px); padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-        button { width: 100%; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background-color: #45a049; }
-        #result { margin-top: 20px; padding: 15px; background-color: #e7f3fe; border-radius: 4px; text-align: center; }
-        .chart { margin-top: 20px; }
-        .loading { text-align: center; font-size: 1.2em; color: #333; }
-    </style>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <meta name='description' content='Xavier Fan is an LPG trader focused on physical markets, pricing and risk.'>
+  <title>Xavier Fan | LPG Trader</title>
+  <link rel='preconnect' href='https://fonts.googleapis.com'>
+  <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>
+  <link href='https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600;700&display=swap' rel='stylesheet'>
+  <link rel='stylesheet' href='styles.css'>
 </head>
 <body>
-    <div class="container">
-        <h1>比特币操作盈亏查看器</h1>
-        <div class="input-group">
-            <label for="openPrice">开仓价格 (USD):</label>
-            <input type="number" id="openPrice" step="0.01" required>
+  <div class='site-shell'>
+    <header class='topbar'>
+      <a class='brand' href='#top'>
+        <span class='brand-mark'></span>
+        <span>Xavier Fan</span>
+      </a>
+      <nav class='topnav'>
+        <a href='#edge'>Edge</a>
+        <a href='#profile'>Profile</a>
+        <a href='#work'>Work</a>
+        <a href='#education'>Education</a>
+        <a href='#contact'>Contact</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class='hero reveal' id='top'>
+        <div class='hero-copy'>
+          <p class='eyebrow'>LPG / PHYSICAL MARKETS / PRICING / RISK</p>
+          <h1>LPG trader with a desk shaped by structure, spread, and execution.</h1>
+          <p class='hero-lead'>Focused on physical markets, pricing and risk, with a background in petrochemical risk control and a working style built around physical flow, paper strategy, and trade finance structure.</p>
+          <div class='hero-actions'>
+            <a class='button primary' href='#contact'>Get in touch</a>
+            <a class='button secondary' href='https://github.com/Xavier-Fan123/oil-trading-system' target='_blank' rel='noreferrer'>Featured system</a>
+          </div>
+          <ul class='signal-strip'>
+            <li>Fortune Global 500 platforms</li>
+            <li>Physical + paper integration</li>
+            <li>Trade finance structure</li>
+          </ul>
         </div>
-        <div class="input-group">
-            <label for="direction">方向:</label>
-            <select id="direction">
-                <option value="long">做多</option>
-                <option value="short">做空</option>
-            </select>
+
+        <div class='hero-board'>
+          <div class='board-top'>
+            <div>
+              <p class='board-label'>Desk Readout</p>
+              <p class='board-title'>Commercial edge lives where structure and execution meet.</p>
+            </div>
+            <p class='board-meta'>Energy markets / pricing discipline / risk architecture</p>
+          </div>
+
+          <div class='board-stack'>
+            <div class='board-card'>
+              <article class='metric'>
+                <span>Flow</span>
+                <strong>Physical reality</strong>
+                <small>Ground decisions in logistics, pricing basis, and execution constraints.</small>
+              </article>
+              <article class='metric'>
+                <span>Spread</span>
+                <strong>Paper strategy</strong>
+                <small>Translate commercial exposure into hedgeable risk and cleaner decision logic.</small>
+              </article>
+              <article class='metric'>
+                <span>Structure</span>
+                <strong>Finance discipline</strong>
+                <small>Design trade finance logic as part of the commercial architecture, not an afterthought.</small>
+              </article>
+            </div>
+
+            <div class='board-chart'>
+              <svg viewBox='0 0 780 260' aria-hidden='true'>
+                <line class='chart-axis' x1='18' y1='220' x2='762' y2='220'></line>
+                <line class='chart-axis' x1='18' y1='32' x2='18' y2='220'></line>
+                <line class='chart-axis faint' x1='18' y1='180' x2='762' y2='180'></line>
+                <line class='chart-axis faint' x1='18' y1='132' x2='762' y2='132'></line>
+                <line class='chart-axis faint' x1='18' y1='84' x2='762' y2='84'></line>
+                <path class='chart-line chart-line-primary' d='M18 214 C108 192 162 104 236 110 S382 208 472 154 S628 74 762 96'></path>
+                <path class='chart-line chart-line-secondary' d='M18 184 C98 156 164 138 236 146 S386 168 472 138 S632 112 762 124'></path>
+                <circle class='chart-point' cx='236' cy='110' r='4.5'></circle>
+                <circle class='chart-point' cx='472' cy='154' r='4.5'></circle>
+                <circle class='chart-point' cx='762' cy='96' r='4.5'></circle>
+              </svg>
+              <div class='board-caption'>
+                <span>Physical flow</span>
+                <span>Paper hedge</span>
+                <span>Risk structure</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="input-group">
-            <label for="amount">BTC数量:</label>
-            <input type="number" id="amount" step="0.0001" required>
+      </section>
+
+      <div class='ticker' aria-hidden='true'>
+        <div class='ticker-track'>
+          <span>Physical flow</span>
+          <span>Paper strategy</span>
+          <span>Pricing discipline</span>
+          <span>Risk architecture</span>
+          <span>Trade finance structure</span>
+          <span>Petrochemical markets</span>
+          <span>Physical flow</span>
+          <span>Paper strategy</span>
+          <span>Pricing discipline</span>
+          <span>Risk architecture</span>
+          <span>Trade finance structure</span>
+          <span>Petrochemical markets</span>
         </div>
-        <div class="input-group">
-            <label for="timeframe">时间周期:</label>
-            <select id="timeframe">
-                <option value="1min">1分钟</option>
-                <option value="5min">5分钟</option>
-                <option value="1hour">1小时</option>
-                <option value="6hour">6小时</option>
-                <option value="1day">1日</option>
-                <option value="1week">1周</option>
-            </select>
+      </div>
+
+      <section class='section reveal' id='edge'>
+        <div class='section-heading'>
+          <p class='section-kicker'>01 / Trading Edge</p>
+          <h2>Commercial decisions become stronger when the market view, hedge logic, and financing structure are designed together.</h2>
         </div>
-        <button onclick="trackPosition()">跟踪位置</button>
-        <div id="result"></div>
-        <div id="chart" class="chart"></div>
-    </div>
+        <div class='edge-grid'>
+          <article class='panel'>
+            <h3>Physical + paper integration</h3>
+            <p>Link desk decisions to real cargo flow, execution constraints, and risk transfer instead of treating them as separate conversations.</p>
+          </article>
+          <article class='panel'>
+            <h3>Pricing and risk discipline</h3>
+            <p>Approach pricing through exposure shape, basis awareness, and commercial downside rather than headline market moves alone.</p>
+          </article>
+          <article class='panel'>
+            <h3>Trade finance structuring</h3>
+            <p>Use financing structure as a commercial lever that improves resilience, execution quality, and transaction design.</p>
+          </article>
+          <article class='panel'>
+            <h3>Petrochemical market context</h3>
+            <p>Bring a risk-control foundation from the wider oil and petrochemical chain into LPG-focused decision making.</p>
+          </article>
+        </div>
+      </section>
 
-    <script>
-        const API_KEY = 'cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P';
-        const symbol = 'BTCUSD';
+      <section class='section section-profile reveal' id='profile'>
+        <div class='section-heading'>
+          <p class='section-kicker'>02 / Profile</p>
+          <h2>An operating style built on risk control, market structure, and disciplined execution.</h2>
+        </div>
+        <div class='profile-layout'>
+          <div class='profile-copy'>
+            <p>From petrochemical risk control to LPG trading, my work sits where execution discipline and market structure meet. I am most effective in environments where the physical market, the paper market, and the financing framework need to support the same commercial objective.</p>
+            <p>That means translating physical constraints into pricing decisions, connecting paper exposure to real flow, and treating finance structure as part of the trade design rather than a downstream process.</p>
+            <p>My preference is for systems and teams that reward clarity of risk, precision of execution, and a structured view of how markets actually move through the chain.</p>
+          </div>
+          <div class='profile-rail'>
+            <article class='rail-item'>
+              <span class='rail-label'>Background</span>
+              <strong>Petrochemical risk control</strong>
+              <p>Built on exposure discipline, control logic, and commercial risk visibility.</p>
+            </article>
+            <article class='rail-item'>
+              <span class='rail-label'>Current focus</span>
+              <strong>LPG trading</strong>
+              <p>Focused on physical markets, pricing, and structured risk thinking.</p>
+            </article>
+            <article class='rail-item'>
+              <span class='rail-label'>Operating edge</span>
+              <strong>Structure before noise</strong>
+              <p>Use market structure, hedge logic, and financing design to sharpen execution quality.</p>
+            </article>
+          </div>
+        </div>
+      </section>
 
-        async function fetchData(timeframe) {
-            const url = `https://financialmodelingprep.com/api/v3/historical-chart/${timeframe}/${symbol}?apikey=${API_KEY}`;
-            try {
-                const response = await axios.get(url);
-                return response.data;
-            } catch (error) {
-                throw new Error('数据加载失败，请稍后再试');
-            }
-        }
+      <section class='section reveal' id='work'>
+        <div class='section-heading'>
+          <p class='section-kicker'>03 / Selected Work</p>
+          <h2>Two systems that reflect how I translate market thinking into structured tools.</h2>
+        </div>
+        <div class='work-grid'>
+          <a class='work-card featured' href='https://github.com/Xavier-Fan123/oil-trading-system' target='_blank' rel='noreferrer'>
+            <div class='work-top'>
+              <span class='work-tag'>Featured</span>
+              <span class='work-code'>01</span>
+            </div>
+            <h3>oil-trading-system</h3>
+            <p>A full-stack trading platform designed around operational workflow, settlement logic, position visibility, and risk-aware system design. It reflects a desk-side view of how trading activity should be structured rather than a generic software showcase.</p>
+            <ul class='work-points'>
+              <li>Workflow logic</li>
+              <li>Settlement structure</li>
+              <li>Risk visibility</li>
+            </ul>
+            <span class='work-link'>Open repository</span>
+          </a>
 
-        function calculatePnL(openPrice, currentPrice, amount, direction) {
-            return direction === 'long' ? 
-                (currentPrice - openPrice) * amount :
-                (openPrice - currentPrice) * amount;
-        }
+          <a class='work-card' href='https://github.com/Xavier-Fan123/lpg-trading-knowledge-base' target='_blank' rel='noreferrer'>
+            <div class='work-top'>
+              <span class='work-tag'>Research system</span>
+              <span class='work-code'>02</span>
+            </div>
+            <h3>lpg-trading-knowledge-base</h3>
+            <p>A structured LPG trading knowledge base covering market fundamentals, pricing benchmarks, physical logistics, and research workflows. It shows the habit of turning fragmented market knowledge into a usable decision framework.</p>
+            <ul class='work-points'>
+              <li>Market structure</li>
+              <li>Research workflow</li>
+              <li>Knowledge system</li>
+            </ul>
+            <span class='work-link'>Open repository</span>
+          </a>
+        </div>
+      </section>
 
-        function displayResult(openPrice, currentPrice, pnl) {
-            document.getElementById('result').innerHTML = `
-                <h2>结果</h2>
-                <p>开仓价格: $${openPrice.toFixed(2)}</p>
-                <p>当前价格: $${currentPrice.toFixed(2)}</p>
-                <p>盈亏: $${pnl.toFixed(2)}</p>
-            `;
-        }
+      <section class='section reveal' id='education'>
+        <div class='section-heading'>
+          <p class='section-kicker'>04 / Education</p>
+          <h2>Academic training that supports commercial thinking without dominating it.</h2>
+        </div>
+        <div class='edu-grid'>
+          <article class='edu-card'>
+            <p class='edu-type'>Economics</p>
+            <h3>Xiamen University</h3>
+            <p>School of Economics</p>
+          </article>
+          <article class='edu-card'>
+            <p class='edu-type'>Financial Economics</p>
+            <h3>Singapore Management University</h3>
+            <p>Master of Science</p>
+          </article>
+        </div>
+      </section>
 
-        function calculateMA(data, period) {
-            let result = [];
-            for (let i = 0; i < data.length; i++) {
-                if (i < period - 1) {
-                    result.push(null);
-                } else {
-                    let sum = 0;
-                    for (let j = 0; j < period; j++) {
-                        sum += data[i - j].close;
-                    }
-                    result.push(sum / period);
-                }
-            }
-            return result;
-        }
+      <section class='section reveal' id='contact'>
+        <div class='contact-shell'>
+          <div>
+            <p class='section-kicker'>05 / Contact</p>
+            <h2>Open to thoughtful conversations across LPG, risk, structure, and energy market systems.</h2>
+          </div>
+          <div class='contact-grid'>
+            <a class='contact-link' href='mailto:fanzhangxuan@outlook.com'>
+              <span class='contact-label'>Email</span>
+              <span class='contact-value'>fanzhangxuan@outlook.com</span>
+            </a>
+            <a class='contact-link' href='https://www.linkedin.com/in/zhangxuan-fan-23a88a245' target='_blank' rel='noreferrer'>
+              <span class='contact-label'>LinkedIn</span>
+              <span class='contact-value'>zhangxuan-fan-23a88a245</span>
+            </a>
+            <a class='contact-link' href='https://github.com/Xavier-Fan123' target='_blank' rel='noreferrer'>
+              <span class='contact-label'>GitHub</span>
+              <span class='contact-value'>Xavier-Fan123</span>
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
 
-        function createChart(data) {
-            const traceCandlestick = {
-                x: data.map(item => item.date),
-                close: data.map(item => item.close),
-                high: data.map(item => item.high),
-                low: data.map(item => item.low),
-                open: data.map(item => item.open),
-                type: 'candlestick',
-                xaxis: 'x',
-                yaxis: 'y'
-            };
+    <footer class='footer'>
+      <p>Built for GitHub Pages</p>
+      <p>Xavier Fan</p>
+    </footer>
+  </div>
 
-            const ma20 = calculateMA(data, 20);
-            const traceMA20 = {
-                x: data.map(item => item.date),
-                y: ma20,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'MA20',
-                line: { color: 'blue' }
-            };
-
-            const ma60 = calculateMA(data, 60);
-            const traceMA60 = {
-                x: data.map(item => item.date),
-                y: ma60,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'MA60',
-                line: { color: 'green' }
-            };
-
-            const ma120 = calculateMA(data, 120);
-            const traceMA120 = {
-                x: data.map(item => item.date),
-                y: ma120,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'MA120',
-                line: { color: 'red' }
-            };
-
-            const layout = {
-                title: 'BTC/USD 价格走势图',
-                dragmode: 'zoom',
-                showlegend: true,
-                xaxis: { rangeslider: { visible: false }, title: 'Date' },
-                yaxis: { title: 'Price (USD)' }
-            };
-
-            Plotly.newPlot('chart', [traceCandlestick, traceMA20, traceMA60, traceMA120], layout);
-        }
-
-        async function trackPosition() {
-            const openPrice = parseFloat(document.getElementById('openPrice').value);
-            const direction = document.getElementById('direction').value;
-            const amount = parseFloat(document.getElementById('amount').value);
-            const timeframe = document.getElementById('timeframe').value;
-
-            if (isNaN(openPrice) || isNaN(amount)) {
-                alert('请输入有效的开仓价格和BTC数量');
-                return;
-            }
-
-            // Save inputs to localStorage
-            localStorage.setItem('openPrice', openPrice);
-            localStorage.setItem('direction', direction);
-            localStorage.setItem('amount', amount);
-            localStorage.setItem('timeframe', timeframe);
-
-            // Show loading indicator
-            document.getElementById('result').innerHTML = '<div class="loading">数据加载中...</div>';
-            document.getElementById('chart').innerHTML = '';
-
-            try {
-                const data = await fetchData(timeframe);
-
-                if (data.length === 0) {
-                    document.getElementById('result').innerHTML = "<p style='color: red;'>错误：没有找到数据</p>";
-                    return;
-                }
-
-                const currentPrice = data[0].close;
-                const pnl = calculatePnL(openPrice, currentPrice, amount, direction);
-
-                displayResult(openPrice, currentPrice, pnl);
-                createChart(data);
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('result').innerHTML = "<p style='color: red;'>发生错误，请稍后再试</p>";
-            }
-        }
-
-        // 页面加载时恢复上次输入的数据
-        window.onload = function() {
-            if (localStorage.getItem('openPrice')) {
-                document.getElementById('openPrice').value = localStorage.getItem('openPrice');
-                document.getElementById('direction').value = localStorage.getItem('direction');
-                document.getElementById('amount').value = localStorage.getItem('amount');
-                document.getElementById('timeframe').value = localStorage.getItem('timeframe');
-                trackPosition();
-            }
-        }
-    </script>
+  <script src='script.js'></script>
 </body>
 </html>
-
